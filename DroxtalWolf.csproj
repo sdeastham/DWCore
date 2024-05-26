@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\AtmosTools\AtmosTools.csproj" />
+      <ProjectReference Include="..\NetcdfSerializer\SerializeNC.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
+      <PackageReference Include="Parquet.Net" Version="4.23.5" />
+      <PackageReference Include="SDSLite" Version="3.0.1" />
+      <PackageReference Include="YamlDotNet" Version="15.1.4" />
+    </ItemGroup>
+
+</Project>
