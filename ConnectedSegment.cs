@@ -1,0 +1,164 @@
+﻿using AtmosTools;
+
+namespace DroxtalWolf;
+
+public class ConnectedSegment
+{
+    public AdvectedPointConnected Head { get; protected set; }
+    public AdvectedPointConnected Tail { get; protected set; }
+    public double InitialSegmentLength { get; protected set; }
+    private bool HeadUpdated;
+    private bool TailUpdated;
+    private string Source;
+    private uint UniqueID;
+    
+    // Avoid unnecessary recalculations
+    private double _SegmentLength;
+    private double _Orientation;
+
+    public double SegmentLength
+    {
+        get
+        {
+            UpdateProperties();
+            return _SegmentLength;
+        }
+    }
+
+    public double Orientation
+    {
+        get
+        {
+            UpdateProperties();
+            return _Orientation;
+        }
+    }
+    
+    private double _XMidpoint;
+    public double XMidpoint
+    {
+        get
+        {
+            UpdateProperties();
+            return _XMidpoint;
+        }
+    }
+
+    private double _YMidpoint;
+    public double YMidpoint
+    {
+        get
+        {
+            UpdateProperties();
+            return _YMidpoint;
+        }
+    }
+
+    protected bool Stale { get; private set; }
+    
+    public ConnectedSegment(AdvectedPointConnected head, AdvectedPointConnected tail, uint uniqueId, string source="UNKNOWN")
+    {
+        Head = head;
+        Tail = tail;
+        HeadUpdated = true;
+        TailUpdated = true;
+        Stale = true;
+        UpdateProperties();
+        InitialSegmentLength = SegmentLength;
+        HeadUpdated = false;
+        TailUpdated = false;
+        Stale = false;
+        UniqueID = uniqueId;
+        Source = source;
+    }
+
+    public void Advance(AdvectedPointConnected source)
+    {
+        // Only perform segment calculations once both the head and tail have been updated to their new positions
+        if (source == Head)
+        {
+            HeadUpdated = true;
+        }
+        else if (source == Tail)
+        {
+            TailUpdated = true;
+        }
+        if (!(HeadUpdated && TailUpdated)) { return; }
+
+        // Properties will need to be updated
+        Stale = true;
+        
+        // Prepare for the next time step
+        HeadUpdated = false;
+        TailUpdated = false;
+    }
+
+    private void UpdateProperties()
+    {
+        // If the properties are still up to date,
+        // don't bother re-calculating (expensive!)
+        if (!Stale) return;
+        // Update the segment's length
+        CalculateSegmentLength();
+        // Update the midpoint
+        CalculateSegmentMidpoint();
+        CalculateOrientation();
+        Stale = false;
+    }
+
+    private void CalculateSegmentLength()
+    {
+        _SegmentLength = Geodesy.GreatCircleDistance(Head.X, Head.Y, Tail.X, Tail.Y);
+    }
+
+    private void CalculateSegmentMidpoint()
+    {
+        // Get the midpoint
+        (double[] lons, double[] lats, double[] lengths) = Geodesy.GreatCircleWaypointsByCount(Tail.X, Tail.Y,
+            Head.X, Head.Y, 3);
+        _XMidpoint = lons[1];
+        _YMidpoint = lats[1];
+    }
+
+    private void CalculateOrientation()
+    {
+        _Orientation = Geodesy.CourseDegrees(Tail.X, Tail.Y, Head.X, Head.Y);
+    }
+
+    public double GetProperty(string property)
+    {
+        switch (property.ToLower().Replace("_",""))
+        {
+            case "stretch":
+                return SegmentLength / InitialSegmentLength;
+            case "length":
+                return SegmentLength;
+            case "tailx":
+            case "taillon":
+            case "taillongitude":
+                return Tail.X;
+            case "taily":
+            case "taillat":
+            case "taillatitude":
+                return Tail.Y;
+            case "tailp":
+            case "tailpressure":
+                return Tail.Pressure;
+            case "headx":
+            case "headlon":
+            case "headlongitude":
+                return Head.X;
+            case "heady":
+            case "headlat":
+            case "headlatitude":
+                return Head.Y;
+            case "headp":
+            case "headpressure":
+                return Head.Pressure;
+            case "orientation":
+                return Orientation;
+            default:
+                throw new ArgumentException($"No property for LGSegment called {property}");
+        }
+    }
+}
