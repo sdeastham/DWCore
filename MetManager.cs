@@ -28,7 +28,7 @@ public class MetManager
 
     private Dictionary<string, Stopwatch> Stopwatches;
         
-    public MetManager(string metDir, double[] lonLims, double[] latLims, DateTime startDate, bool useSerial, Dictionary<string, Stopwatch> stopwatches, string dataSource)
+    public MetManager(string metDir, double[] lonLims, double[] latLims, DateTime startDate, Dictionary<string, Stopwatch> stopwatches, string dataSource)
     {
         MetFiles = [];
         Stopwatches = stopwatches;
@@ -54,17 +54,9 @@ public class MetManager
             string currentTemplate;
 
             // 3-hour instantaneous
-            if (useSerial)
-            {
-                currentTemplate = Path.Combine(metDir, "{0}/{1,2:d2}/MERRA2.{0}{1,2:d2}{2,2:d2}.I3.{3}.05x0625.serial");
-            }
-            else
-            {
-                currentTemplate = Path.Combine(metDir, "{0}/{1,2:d2}/MERRA2.{0}{1,2:d2}{2,2:d2}.I3.05x0625.nc4");
-            }
-
+            currentTemplate = Path.Combine(metDir, "{0}/{1,2:d2}/MERRA2.{0}{1,2:d2}{2,2:d2}.I3.05x0625.nc4");
             currentFile = (MetFile)MetFileFactory.CreateMetFile(currentTemplate, startDate, I3VarList2D, I3VarList3D,
-                lonLims, latLims, Stopwatches, I3Offset, timeInterp: true, useSerial: useSerial);
+                lonLims, latLims, Stopwatches, I3Offset, timeInterp: true);
             MetFiles.Add(currentFile);
 
             // Set up connections
@@ -77,19 +69,10 @@ public class MetManager
             TFileIndex = I3Index;
 
             // 3-hour averaged, dynamics
-            if (useSerial)
-            {
-                currentTemplate = Path.Combine(metDir,
-                    "{0}/{1,2:d2}/MERRA2.{0}{1,2:d2}{2,2:d2}.A3dyn.{3}.05x0625.serial");
-            }
-            else
-            {
-                currentTemplate = Path.Combine(metDir, "{0}/{1,2:d2}/MERRA2.{0}{1,2:d2}{2,2:d2}.A3dyn.05x0625.nc4");
-            }
+            currentTemplate = Path.Combine(metDir, "{0}/{1,2:d2}/MERRA2.{0}{1,2:d2}{2,2:d2}.A3dyn.05x0625.nc4");
 
             currentFile = (MetFile)MetFileFactory.CreateMetFile(currentTemplate, startDate, A3DynVarList2D,
-                A3DynVarList3D,
-                lonLims, latLims, Stopwatches, A3Offset, timeInterp: false, useSerial: useSerial);
+                A3DynVarList3D, lonLims, latLims, Stopwatches, A3Offset, timeInterp: false);
             MetFiles.Add(currentFile);
 
             int A3DynIndex = MetFiles.Count() - 1;
@@ -101,19 +84,10 @@ public class MetManager
             OmegaFileIndex = A3DynIndex;
 
             // 3-hour averaged, cloud
-            if (useSerial)
-            {
-                currentTemplate = Path.Combine(metDir,
-                    "{0}/{1,2:d2}/MERRA2.{0}{1,2:d2}{2,2:d2}.A3cld.{3}.05x0625.serial");
-            }
-            else
-            {
-                currentTemplate = Path.Combine(metDir, "{0}/{1,2:d2}/MERRA2.{0}{1,2:d2}{2,2:d2}.A3cld.05x0625.nc4");
-            }
+            currentTemplate = Path.Combine(metDir, "{0}/{1,2:d2}/MERRA2.{0}{1,2:d2}{2,2:d2}.A3cld.05x0625.nc4");
 
             currentFile = (MetFile)MetFileFactory.CreateMetFile(currentTemplate, startDate, A3CldVarList2D,
-                A3CldVarList3D,
-                lonLims, latLims, Stopwatches, A3Offset, timeInterp: false, useSerial: useSerial);
+                A3CldVarList3D, lonLims, latLims, Stopwatches, A3Offset, timeInterp: false);
             MetFiles.Add(currentFile);
 
             int A3CldIndex = MetFiles.Count() - 1;
@@ -135,7 +109,7 @@ public class MetManager
             string currentTemplate = Path.Combine(metDir, "{0}/{1,2:d2}/ERA5_surface_{0}{1,2:d2}{2,2:d2}.nc");
 
             currentFile = (MetFile)MetFileFactory.CreateMetFile(currentTemplate, startDate, varList2D, [],
-                lonLims, latLims, Stopwatches, timeOffset, timeInterp: false, useSerial: false);
+                lonLims, latLims, Stopwatches, timeOffset, timeInterp: false);
             MetFiles.Add(currentFile);
 
             int fileIndex = MetFiles.Count() - 1;
@@ -144,7 +118,7 @@ public class MetManager
             
             currentTemplate = Path.Combine(metDir, "{0}/{1,2:d2}/ERA5_plevs_{0}{1,2:d2}{2,2:d2}.nc");
             currentFile = (MetFile)MetFileFactory.CreateMetFile(currentTemplate, startDate, [], varList3D,
-                lonLims, latLims, Stopwatches, timeOffset, timeInterp: false, useSerial: false);
+                lonLims, latLims, Stopwatches, timeOffset, timeInterp: false);
             MetFiles.Add(currentFile);
             
             // Set up connections

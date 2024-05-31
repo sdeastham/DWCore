@@ -5,7 +5,6 @@ using Microsoft.Research.Science.Data.NetCDF4;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using SerializeNC;
 
 namespace DroxtalWolf;
 
@@ -23,17 +22,10 @@ public static class MetFileFactory
 {
     public static IMetFile CreateMetFile(string fileTemplate, DateTime firstTime, string[] dataFields2D,
         string[] dataFields3D, double[] xLim, double[] yLim, Dictionary<string, Stopwatch> stopwatches,
-        int secondOffset=0, bool timeInterp=true, bool useSerial=false)
+        int secondOffset=0, bool timeInterp=true)
     {
         IMetFile metFile;
-        if (useSerial)
-        {
-            metFile = new MetFileSerial(fileTemplate, firstTime, xLim, yLim, secondOffset);
-        }
-        else
-        {
-            metFile = new MetFileNetCDF(fileTemplate, firstTime, xLim, yLim, secondOffset);
-        }
+        metFile = new MetFileNetCDF(fileTemplate, firstTime, xLim, yLim, secondOffset);
         metFile.RegisterStopwatches(stopwatches);
         metFile.Initialize(dataFields2D, dataFields3D, timeInterp);
         return metFile;
@@ -439,52 +431,5 @@ public class MetFileNetCDF : MetFile
             }
         }
         return result;
-    }
-}
-
-public class MetFileSerial : MetFile
-{
-    private string CurrentFileTemplate;
-    public MetFileSerial(string fileTemplate, DateTime firstTime, double[] xLim, double[] yLim, int secondOffset = 0) :
-        base(fileTemplate, firstTime, xLim, yLim, secondOffset)
-    {
-        // Nothing additional to do
-    }
-
-    protected override void UpdateVar(IMetData metVar, bool readFile)
-    {
-        metVar.Update(string.Format(CurrentFileTemplate,metVar.GetName()),TimeIndex,readFile);
-    }
-
-    private void FillCurrentTemplate(DateTime targetTime)
-    {
-        // Updates the file template so that the full path to the file for a given variable can be easily generated
-        CurrentFileTemplate = string.Format(FileTemplate, targetTime.Year, targetTime.Month, targetTime.Day, "{0}");
-    }
-
-    private string VariableFilePath(string varName)
-    {
-        return string.Format(CurrentFileTemplate, varName);
-    }
-    
-    public override void OpenFile(DateTime targetTime, bool firstRead)
-    {
-        FillCurrentTemplate(targetTime);
-        string fileName = VariableFilePath("DIMENSIONS");
-        (DateTime[]? timeVec, int? nLevels, float[]? latMids, float[]? lonMids, bool[] dimsFound) =
-            NetcdfSerializer.DeserializeDimensions(fileName);
-        int nTimes = timeVec?.Length ?? 1;
-        TimeVec = new DateTime[nTimes + 1];
-        for (int i = 0; i < nTimes; i++)
-        {
-            TimeVec[i+1] = timeVec[i] + TimeSpan.FromSeconds(SecondOffset);
-        }
-        TimeVec[0] = TimeVec[1] - (timeVec[1] - timeVec[0]);
-        if (firstRead || XBounds == null || YBounds == null || XEdge == null || YEdge == null)
-        {
-            // Set up the domain too
-            (XEdge, YEdge, XBounds, YBounds ) = ParseLatLon( lonMids, latMids, XLim, YLim );
-            NLevels = nLevels ?? 1;
-        }
     }
 }

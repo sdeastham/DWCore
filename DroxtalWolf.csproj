@@ -8,7 +8,6 @@
 
     <ItemGroup>
       <ProjectReference Include="..\AtmosTools\AtmosTools.csproj" />
-      <ProjectReference Include="..\NetcdfSerializer\SerializeNC.csproj" />
     </ItemGroup>
 
     <ItemGroup>

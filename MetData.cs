@@ -3,7 +3,6 @@ using System.Xml;
 using Microsoft.Research.Science.Data;
 using Microsoft.Research.Science.Data.Imperative;
 using Microsoft.Research.Science.Data.NetCDF4;
-using SerializeNC;
 
 namespace DroxtalWolf;
 
@@ -48,12 +47,9 @@ public abstract class MetData<T> : IMetData
 
     protected abstract void ShuffleLastToFirst();
     protected abstract void ReadData(DataSet ds);
-    protected abstract void ReadData(string fileTemplate);
 
     protected double ScaleValue;
     protected double OffsetValue;
-
-    protected bool SerializedData;
     protected int Rank;
 
     private bool Initialized;
@@ -64,7 +60,7 @@ public abstract class MetData<T> : IMetData
     protected float ShortScaling = 1.0f;
     protected float ShortOffset = 0.0f;
 
-    protected MetData(string fieldName, int[] xBounds, int[] yBounds, int timesPerFile, double scaleValue=1.0, double offsetValue=0.0, bool serializedData=false)
+    protected MetData(string fieldName, int[] xBounds, int[] yBounds, int timesPerFile, double scaleValue=1.0, double offsetValue=0.0)
     {
         // Bounds of domain to be read in
         XBounds = xBounds;
@@ -93,8 +89,6 @@ public abstract class MetData<T> : IMetData
         // Indicate that the first update needs to fill the data arrays
         Initialized = false;
         
-        // Will we use netCDF data or serialized?
-        SerializedData = serializedData;
         Rank = 0;
     }
 
@@ -113,32 +107,21 @@ public abstract class MetData<T> : IMetData
         }
         if (readFile || !Initialized)
         {
-            switch (dataSource)
+    
+            if (!Initialized)
             {
-                case DataSet:
-                    if (!Initialized)
-                    {
-                        // ERA5 data is held as int16, i.e. short, rather than 32-bit floats, which are then converted
-                        // SDSLite does not have elegant methods to handle this
-                        Variable dsVariable = ((DataSet)(object)dataSource!).Variables[FieldName];
-                        ConvertShort = dsVariable.TypeOfData == typeof(short);
-                        if (ConvertShort)
-                        {
-                            var propertyDict = dsVariable.Metadata.AsDictionary();
-                            ShortScaling = Convert.ToSingle(propertyDict["scale_factor"]);
-                            ShortOffset = Convert.ToSingle(propertyDict["add_offset"]);
-                        }
-                    }
-                    ReadData((DataSet)(object)dataSource!);
-                    break;
-                case string:
-                    ConvertShort = false;
-                    ReadData((string)(object)dataSource);
-                    break;
-                default:
-                    throw new ArgumentException("Unrecognized data type for met update.");
+                // ERA5 data is held as int16, i.e. short, rather than 32-bit floats, which are then converted
+                // SDSLite does not have elegant methods to handle this
+                Variable dsVariable = ((DataSet)(object)dataSource!).Variables[FieldName];
+                ConvertShort = dsVariable.TypeOfData == typeof(short);
+                if (ConvertShort)
+                {
+                    var propertyDict = dsVariable.Metadata.AsDictionary();
+                    ShortScaling = Convert.ToSingle(propertyDict["scale_factor"]);
+                    ShortOffset = Convert.ToSingle(propertyDict["add_offset"]);
+                }
             }
-            //Console.WriteLine($"VARIABLE {GetName()} NEW READ-IN COMPLETE");
+            ReadData((DataSet)(object)dataSource!);
         }
         Initialized = true;
     }
@@ -215,12 +198,6 @@ public abstract class MetData2D : MetData<double[,]>
         {
             rawData = ds.GetData<float[,,]>(FieldName);
         }
-        ScaleShiftData(rawData);
-    }
-
-    protected override void ReadData(string fileTemplate)
-    {
-        (_, float[,,] rawData) = NetcdfSerializer.Deserialize2D(string.Format(fileTemplate, FieldName));
         ScaleShiftData(rawData);
     }
 
@@ -371,11 +348,6 @@ public abstract class MetData3D : MetData<double[,,]>
             rawData = ds.GetData<float[,,,]>(FieldName);
         }
         ScaleShiftData(rawData);
-    }
-
-    protected override void ReadData(string fileTemplate)
-    {
-        ScaleShiftData(NetcdfSerializer.Deserialize3D(string.Format(fileTemplate, FieldName)).Item2);
     }
 }
     
