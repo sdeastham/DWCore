@@ -86,10 +86,21 @@ public class PointManagerFlight : PointManager
 
     public bool SimulateFlight(double originLon, double originLat, double destinationLon, double destinationLat,
         DateTime takeoffTime, double cruiseSpeedKPH, string? flightLabel = null, double pointPeriod = 60.0 * 5.0,
-        IAircraft? equipment = null)
+        IAircraft? equipment = null, double? cruiseAltitudeKm = null)
     {
         // Crude flight simulation between two airports. Currently only handles cruise
-        double cruiseAltitude = RandomNumberGenerator == null ? 10.0 : 9.0 + RandomNumberGenerator.NextDouble() * (12.0 - 9.0);
+        double cruiseAltitude;
+        if (cruiseAltitudeKm == null)
+        {
+            cruiseAltitude = RandomNumberGenerator == null
+                ? 10.0 // If null, use default value
+                : 9.0 + RandomNumberGenerator.NextDouble() * (12.0 - 9.0); // Otherwise, use a random number 
+        }
+        else
+        {
+            cruiseAltitude = (double)cruiseAltitudeKm;
+        }
+
         double flightDistance = Geodesy.GreatCircleDistance(originLon, originLat, destinationLon, destinationLat);
         equipment?.InitializeFlight(flightDistance, loadFactor: 0.8);
 
