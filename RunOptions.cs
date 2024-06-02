@@ -85,6 +85,7 @@ public abstract class LGOptionsPoints
     public bool WriteTrajectories = false;
     public string TrajectoryFilename = "default_trajectory_{date}_{uid}.nc";
     public string[] TrajectoryVariables = [];
+    public bool FirstOrderIntegration = false;
 
     public bool Active => (Max == null || Max > 0);
 }

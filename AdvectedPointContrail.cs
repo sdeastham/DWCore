@@ -44,9 +44,10 @@ public class AdvectedPointContrail : AdvectedPointConnected
     
     public Func<double, double, double, (double, double, double)> VelocityCalcNoSettling { get; protected set; }
 
-    public AdvectedPointContrail(Func<double, double, double, (double, double, double)> vCalc, bool includeCompression,
-        bool includeSettling, double minimumPointLifetime=0.0, bool skipNewtonIterationForTlm=false,
-        bool usePonaterTlc=false) : base(vCalc, minimumPointLifetime)
+    public AdvectedPointContrail(Func<double, double, double, (double, double, double)> vCalc, bool eulerIntegration, 
+        bool includeCompression, bool includeSettling, double minimumPointLifetime=0.0, 
+        bool skipNewtonIterationForTlm=false, bool usePonaterTlc=false) : base(vCalc, eulerIntegration,
+        minimumPointLifetime)
     {
         // Override vCalc to allow for inclusion of a settling speed
         VelocityCalcNoSettling = vCalc;

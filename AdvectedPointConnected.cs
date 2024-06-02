@@ -3,8 +3,8 @@
 namespace DroxtalWolf;
 
 public class AdvectedPointConnected(
-    Func<double, double, double, (double, double, double)> vCalc, double minimumPointLifetime=0.0)
-    : AdvectedPoint(vCalc)
+    Func<double, double, double, (double, double, double)> vCalc, bool eulerIntegration, double minimumPointLifetime=0.0)
+    : AdvectedPoint(vCalc,eulerIntegration)
 {
     /*
      LGPointConnected objects are intended to represent vertices along a chain of points, e.g. representing a

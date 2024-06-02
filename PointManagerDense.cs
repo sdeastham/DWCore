@@ -18,7 +18,7 @@ public class PointManagerDense : PointManager
         
     protected override IAdvected CreatePoint()
     {
-        return new AdvectedPointAirMass(VelocityCalc,IncludeCompression);
+        return new AdvectedPointAirMass(VelocityCalc,EulerIntegration,IncludeCompression);
     }
         
     public override void Seed(double dt)

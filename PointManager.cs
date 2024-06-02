@@ -73,6 +73,8 @@ public abstract class PointManager
 
     private DateTime CurrentTime;
 
+    protected bool EulerIntegration;
+    
     public PointManager(DomainManager domain, RunOptions configOptions, LGOptionsPoints configSubOptions)
     {
         // UIDs start from 1 (0 reserved for inactive points)
@@ -84,6 +86,9 @@ public abstract class PointManager
 
         // Are we calculating the effect of adiabatic compression?
         IncludeCompression = configSubOptions.AdiabaticCompression;
+        
+        // Do we use simple first-order Euler integration for velocity calculation?
+        EulerIntegration = configSubOptions.FirstOrderIntegration;
 
         // Where to output data
         WriteOutput = configSubOptions.WritePeriodic; // Output data on all points to netCDF files periodically
@@ -158,7 +163,7 @@ public abstract class PointManager
     // Use this to abstract the underlying type of the points and allow inheriting classes to change them
     protected virtual IAdvected CreatePoint()
     {
-        return new AdvectedPoint(VelocityCalc);
+        return new AdvectedPoint(VelocityCalc,EulerIntegration);
     }
     
     private static void InitializeHistory<T>(Dictionary<string, List<T>> propertyHistory, IEnumerable<string> propertyNames)

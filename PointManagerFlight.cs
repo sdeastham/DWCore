@@ -80,8 +80,8 @@ public class PointManagerFlight : PointManager
 
     protected override IAdvected CreatePoint()
     {
-        return ContrailSimulation ? new AdvectedPointContrail(VelocityCalc, IncludeCompression, IncludeSettling,
-            MinimumPointLifetime, SkipNewtonIterationForTlm, UsePonaterTlc) : new AdvectedPointConnected(VelocityCalc, MinimumPointLifetime);
+        return ContrailSimulation ? new AdvectedPointContrail(VelocityCalc, EulerIntegration, IncludeCompression, IncludeSettling,
+            MinimumPointLifetime, SkipNewtonIterationForTlm, UsePonaterTlc) : new AdvectedPointConnected(VelocityCalc, EulerIntegration, MinimumPointLifetime);
     }
 
     public bool SimulateFlight(double originLon, double originLat, double destinationLon, double destinationLat,

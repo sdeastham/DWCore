@@ -22,7 +22,8 @@ public class AdvectedPointAirMass : AdvectedPoint
 
     public const double GammaRatio = 0.4/1.4;
 
-    public AdvectedPointAirMass(Func<double, double, double, (double, double, double)> vCalc, bool includeCompression) : base(vCalc)
+    public AdvectedPointAirMass(Func<double, double, double, (double, double, double)> vCalc, bool eulerIntegration, 
+        bool includeCompression) : base(vCalc, eulerIntegration)
     {
         IncludeCompression = includeCompression;
     }

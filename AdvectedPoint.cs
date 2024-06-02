@@ -20,6 +20,8 @@ public class AdvectedPoint : IAdvected
     public Func<double, double, double, (double, double, double)> VelocityCalc
     { get; protected set; }
 
+    private Func<double, (double, double, double)> UpdateCalc;
+
     public bool Active
     { get; protected set; }
 
@@ -35,7 +37,7 @@ public class AdvectedPoint : IAdvected
     }
 
     private static readonly DateTime ReferenceTime = new DateTime(1970, 1, 1, 0, 0, 0);
-
+    
     // Convenience properties
     public double X
     { 
@@ -72,12 +74,20 @@ public class AdvectedPoint : IAdvected
 
     public DateTime InitiationDate;
 
-    public AdvectedPoint( Func<double, double, double, (double, double, double)> vCalc)
+    public AdvectedPoint( Func<double, double, double, (double, double, double)> vCalc, bool useEuler)
     {
         // Point starts inactive
         _location = new Vector3(float.NaN,float.NaN,float.NaN);
         InitialLocation = new Vector3(float.NaN,float.NaN,float.NaN);
         VelocityCalc = vCalc;
+        if (useEuler)
+        {
+            UpdateCalc = EulerUpdate;
+        }
+        else
+        {
+            UpdateCalc = RK4Update;
+        }
         DefaultValidity = true;
         History = [];
         // Set the rest of the properties by deactivating the point
@@ -137,6 +147,25 @@ public class AdvectedPoint : IAdvected
         }
     }
 
+    private (double, double, double) RK4Update(double dt)
+    {
+        (double dx1, double dy1, double dp1) = VelocityCalc(X, Y, Pressure);
+        (double dx2, double dy2, double dp2) =
+            VelocityCalc(X + dx1 * dt / 2.0, Y + dy1 * dt / 2.0, Pressure + dp1 * dt / 2.0);
+        (double dx3, double dy3, double dp3) =
+            VelocityCalc(X + dx2 * dt / 2.0, Y + dy2 * dt / 2.0, Pressure + dp2 * dt / 2.0);
+        (double dx4, double dy4, double dp4) = VelocityCalc(X + dx3 * dt, Y + dy3 * dt, Pressure + dp3 * dt);
+        double xSpeed = (1.0/6.0) * (dx1 + 2.0*dx2 + 2.0*dx3 + dx4);
+        double ySpeed = (1.0/6.0) * (dy1 + 2.0*dy2 + 2.0*dy3 + dy4);
+        double pSpeed = (1.0/6.0) * (dp1 + 2.0*dp2 + 2.0*dp3 + dp4);
+        return (xSpeed, ySpeed, pSpeed);
+    }
+    
+    private (double, double, double) EulerUpdate(double dt)
+    {
+        return VelocityCalc(X, Y, Pressure);
+    }
+    
     public virtual void Advance( double dt, DomainManager domain )
     {
         if (!Active)
@@ -144,14 +173,8 @@ public class AdvectedPoint : IAdvected
             return;
         }
 
-        // RK4
-        ( double dx1, double dy1, double dp1 ) = VelocityCalc( X, Y, Pressure );
-        ( double dx2, double dy2, double dp2 ) = VelocityCalc( X + dx1*dt/2.0, Y + dy1*dt/2.0, Pressure + dp1*dt/2.0);
-        ( double dx3, double dy3, double dp3 ) = VelocityCalc( X + dx2*dt/2.0, Y + dy2*dt/2.0, Pressure + dp2*dt/2.0);
-        ( double dx4, double dy4, double dp4 ) = VelocityCalc( X + dx3*dt, Y + dy3*dt, Pressure + dp3*dt);
-        double xSpeed = (1.0/6.0) * (dx1 + 2.0*dx2 + 2.0*dx3 + dx4);
-        double ySpeed = (1.0/6.0) * (dy1 + 2.0*dy2 + 2.0*dy3 + dy4);
-        double pSpeed = (1.0/6.0) * (dp1 + 2.0*dp2 + 2.0*dp3 + dp4);
+        (double xSpeed, double ySpeed, double pSpeed) = UpdateCalc(dt);;
+        
         X += xSpeed * dt;
         Y += ySpeed * dt;
         Pressure += pSpeed * dt;
